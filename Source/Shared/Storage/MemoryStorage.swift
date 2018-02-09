@@ -1,11 +1,11 @@
 import Foundation
 
 /// Save objects to memory based on NSCache
-public final class MemoryStorage {
+final class MemoryStorage {
+    // Memory cache keys
+    var keys = Set<String>()
     /// Memory cache instance
     fileprivate let cache = NSCache<NSString, MemoryCapsule>()
-    // Memory cache keys
-    fileprivate var keys = Set<String>()
     /// Configuration
     fileprivate let config: MemoryConfig
     
@@ -19,7 +19,7 @@ public final class MemoryStorage {
 }
 
 extension MemoryStorage: StorageAware {
-    public func entry<T: Codable>(ofType type: T.Type, forKey key: String) throws -> Entry<T> {
+    func entry<T: Codable>(ofType type: T.Type, forKey key: String) throws -> Entry<T> {
         guard let capsule = cache.object(forKey: NSString(string: key)) else {
             throw StorageError.notFound
         }
@@ -31,12 +31,12 @@ extension MemoryStorage: StorageAware {
         return Entry(object: object, expiry: capsule.expiry)
     }
     
-    public func removeObject(forKey key: String) {
+    func removeObject(forKey key: String) {
         cache.removeObject(forKey: NSString(string: key))
         keys.remove(key)
     }
     
-    public func setObject<T: Codable>(_ object: T, forKey key: String, expiry: Expiry? = nil) {
+    func setObject<T: Codable>(_ object: T, forKey key: String, expiry: Expiry? = nil) {
         var expiry: Expiry = expiry ?? config.expiry
         if case .seconds(let seconds) = expiry {
             expiry = .date(Date().addingTimeInterval(seconds))
@@ -46,12 +46,12 @@ extension MemoryStorage: StorageAware {
         keys.insert(key)
     }
     
-    public func removeAll() {
+    func removeAll() {
         cache.removeAllObjects()
         keys.removeAll()
     }
     
-    public func removeExpiredObjects() {
+    func removeExpiredObjects() {
         let allKeys = keys
         for key in allKeys {
             removeObjectIfExpired(forKey: key)
@@ -64,7 +64,7 @@ extension MemoryStorage {
      Removes the object from the cache if it's expired.
      - Parameter key: Unique key to identify the object in the cache
      */
-    public func removeObjectIfExpired(forKey key: String) {
+    func removeObjectIfExpired(forKey key: String) {
         if let capsule = cache.object(forKey: NSString(string: key)), capsule.expiry.isExpired {
             removeObject(forKey: key)
         }

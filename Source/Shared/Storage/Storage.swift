@@ -30,7 +30,7 @@ public class Storage {
 
     // Wrapper
     self.interalStorage = TypeWrapperStorage(storage: storage)
-
+    
     // Sync
     self.sync = SyncStorage(storage: interalStorage,
                             serialQueue: DispatchQueue(label: "Cache.SyncStorage.SerialQueue"))
@@ -44,6 +44,12 @@ public class Storage {
 extension Storage: StorageAware {
   public func entry<T: Codable>(ofType type: T.Type, forKey key: String) throws -> Entry<T> {
     return try self.sync.entry(ofType: type, forKey: key)
+  }
+    
+  public func isOnMemory(forKey key: String) -> Bool {
+    guard let interalStorage = self.interalStorage as? TypeWrapperStorage else { return false }
+    guard let storage = interalStorage.internalStorage as? HybridStorage else { return false }
+    return storage.memoryStorage.keys.contains(key)
   }
 
   public func removeObject(forKey key: String) throws {
