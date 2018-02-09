@@ -37,7 +37,11 @@ extension MemoryStorage: StorageAware {
     }
     
     public func setObject<T: Codable>(_ object: T, forKey key: String, expiry: Expiry? = nil) {
-        let capsule = MemoryCapsule(value: object, expiry: expiry ?? config.expiry)
+        var expiry: Expiry = expiry ?? config.expiry
+        if case .seconds(let seconds) = expiry {
+            expiry = .date(Date().addingTimeInterval(seconds))
+        }
+        let capsule = MemoryCapsule(value: object, expiry: expiry)
         cache.setObject(capsule, forKey: NSString(string: key))
         keys.insert(key)
     }
